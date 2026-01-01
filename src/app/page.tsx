@@ -1,9 +1,5 @@
-import IconGenerator from '@/components/IconGenerator';
+import AIconic from '@/components/AIconic';
 
 export default function Home() {
-  return (
-    <main className="min-h-screen py-12">
-      <IconGenerator />
-    </main>
-  );
+  return <AIconic />;
 }

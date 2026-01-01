@@ -12,23 +12,30 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/openai": "^3.0.2",
+    "@gsap/react": "^2.1.2",
+    "@neondatabase/serverless": "^0.10.0",
+    "ai": "^4.0.0",
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.38.0",
+    "framer-motion": "^12.23.26",
+    "gsap": "^3.14.2",
     "next": "^15.0.0",
+    "openai": "^6.15.0",
+    "pnpm": "^10.27.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "ai": "^4.0.0",
-    "@ai-sdk/anthropic": "^1.0.0",
-    "drizzle-orm": "^0.38.0",
-    "@neondatabase/serverless": "^0.10.0",
     "sharp": "^0.33.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "tailwindcss": "^4.0.0",
     "drizzle-kit": "^0.30.0",
     "eslint": "^9.0.0",
-    "eslint-config-next": "^15.0.0"
+    "eslint-config-next": "^15.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.0.0"
   }
 }

@@ -1,9 +1,8 @@
-import { createAnthropic } from '@ai-sdk/anthropic';
-import { generateText } from 'ai';
+import OpenAI from 'openai';
 
-const anthropic = createAnthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-  baseURL: process.env.ANTHROPIC_BASE_URL,
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+  baseURL: process.env.OPENAI_BASE_URL,
 });
 
 export async function generateIconSVG(prompt: string, style: string = 'outline') {
@@ -16,12 +15,16 @@ Rules:
 - Keep paths simple and optimized
 - No external dependencies or fonts`;
 
-  const { text } = await generateText({
-    model: anthropic('claude-sonnet-4-20250514'),
-    system: systemPrompt,
-    prompt: `Create a ${style} style icon for: ${prompt}`,
+  const response = await client.chat.completions.create({
+    model: 'gpt-5.1',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `Create a ${style} style icon for: ${prompt}` }
+    ],
   });
 
+  const text = response.choices[0]?.message?.content || '';
+  
   // 提取SVG代码
   const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/i);
   return svgMatch ? svgMatch[0] : null;
