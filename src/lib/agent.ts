@@ -84,16 +84,17 @@ const toolDefinitions: OpenAI.ChatCompletionTool[] = [
     type: 'function',
     function: {
       name: 'generate_icon_set',
-      description: '根据主体元素，一次性生成 4 种不同配色的图标。这是最常用的生成方式。',
+      description: '根据主体元素列表，一次性生成多种不同风格的图标。每个风格可以使用不同的主体元素。',
       parameters: {
         type: 'object',
         properties: {
-          mainBody: { 
-            type: 'string', 
-            description: '主体元素，如"盾牌"、"云朵"、"硬币"' 
+          mainBodies: { 
+            type: 'array',
+            items: { type: 'string' },
+            description: '主体元素列表，如["灯泡", "铅笔", "调色板", "拼接方块"]，每个风格使用一个主体' 
           },
         },
-        required: ['mainBody'],
+        required: ['mainBodies'],
       },
     },
   },
@@ -148,27 +149,66 @@ export async function runAgentStream(
   userMessage: string, 
   history: Message[] = [], 
   generateMultiple: boolean = false,
+  customStyles: string[] | undefined,
   onEvent: (event: StreamEvent) => void
 ) {
+  // 获取可用风格列表
+  const availableStyles = customStyles && customStyles.length > 0 
+    ? customStyles 
+    : ['appstore', 'material', 'fluent', 'neon'];
+  
+  const styleEnumStr = availableStyles.join(', ');
+  
+  // 动态更新工具定义中的风格枚举
+  const dynamicToolDefinitions: OpenAI.ChatCompletionTool[] = toolDefinitions.map(tool => {
+    if (tool.type === 'function' && tool.function.name === 'generate_icon_by_main_body') {
+      return {
+        type: 'function' as const,
+        function: {
+          ...tool.function,
+          parameters: {
+            type: 'object',
+            properties: {
+              mainBody: { 
+                type: 'string', 
+                description: '主体元素，如"盾牌"、"云朵"、"硬币"' 
+              },
+              style: { 
+                type: 'string', 
+                enum: availableStyles,
+                description: `风格选项: ${styleEnumStr}` 
+              },
+            },
+            required: ['mainBody', 'style'],
+          },
+        },
+      };
+    }
+    return tool;
+  });
+
   // 系统提示词 - 指导 AI 如何使用工具
   const systemPrompt = generateMultiple 
     ? `你是专业的图标设计师。生成图标时必须遵循以下流程：
 
 **重要：必须按顺序执行两个步骤！**
 
-步骤 1: 先调用 analyze_icon_main_body 分析用户描述，获取最佳主体元素
-步骤 2: 选择分析结果中的第一个主体元素，调用 generate_icon_set 生成 4 种配色图标
+步骤 1: 先调用 analyze_icon_main_body 分析用户描述，获取 4 个主体元素
+步骤 2: 将分析得到的所有主体元素传给 generate_icon_set，每个风格使用不同的主体
+
+当前可用风格: ${styleEnumStr}
 
 示例流程:
-用户: "安全相关的图标"
-→ 调用 analyze_icon_main_body(userPrompt: "安全相关的图标")
-→ 得到 mainBodies: ["盾牌", "锁", "钥匙", "城墙"]
-→ 调用 generate_icon_set(mainBody: "盾牌")
-→ 生成 4 个不同配色的盾牌图标
+用户: "创意设计工具"
+→ 调用 analyze_icon_main_body(userPrompt: "创意设计工具")
+→ 得到 mainBodies: ["灯泡", "铅笔", "调色板", "拼接方块"]
+→ 调用 generate_icon_set(mainBodies: ["灯泡", "铅笔", "调色板", "拼接方块"])
+→ 生成 4 个图标，每个风格用不同的主体
 
 现在开始，直接调用工具，不要先回复文字。`
     : `你是专业的图标设计师。
 当用户想要生成图标时，先用 analyze_icon_main_body 分析主体，再用 generate_icon_set 生成图标。
+当前可用风格: ${styleEnumStr}
 用中文回复。`;
 
   const messages: Message[] = [
@@ -180,9 +220,9 @@ export async function runAgentStream(
   try {
     // 第一轮: AI 决定调用哪些工具
     const response = await client.chat.completions.create({
-      model: 'gemini-3-flash-preview',
+      model: 'gpt-5.1',
       messages,
-      tools: toolDefinitions,
+      tools: dynamicToolDefinitions,
       tool_choice: generateMultiple ? 'required' : 'auto',
     });
 
@@ -208,20 +248,19 @@ export async function runAgentStream(
         if (functionName === 'analyze_icon_main_body') {
           onEvent({ type: 'tool_log', name: functionName, message: `分析: "${functionArgs.userPrompt}"` });
         } else if (functionName === 'generate_icon_set') {
-          onEvent({ type: 'tool_log', name: functionName, message: `批量生成: ${functionArgs.mainBody}` });
+          // ['苹果', '香蕉', '橙子'] -> '苹果, 香蕉, 橙子' 把列表数组转成字符串  
+          const bodies = functionArgs.mainBodies.join(',') || functionArgs?.mainBody || '未知';
+          onEvent({ type: 'tool_log', name: functionName, message: `批量生成: ${bodies}` });
         } else if (functionName === 'generate_icon_by_main_body') {
-          const styleNames: Record<string, string> = {
-            appstore: 'App Store 静物',
-            material: 'Material 几何',
-            fluent: 'Fluent 插画',
-            neon: '霓虹发光'
-          };
-          onEvent({ type: 'tool_log', name: functionName, message: `生成: ${functionArgs.mainBody} (${styleNames[functionArgs.style] || functionArgs.style})` });
+          onEvent({ type: 'tool_log', name: functionName, message: `生成: ${functionArgs.mainBody} (${functionArgs.style})` });
         }
         
         const toolFunction = toolFunctions[functionName];
         if (toolFunction) {
-          const result = await toolFunction(functionArgs);
+          // 传递自定义风格给 generate_icon_set
+          const result = functionName === 'generate_icon_set' 
+            ? await toolFunction({ ...functionArgs, styles: availableStyles })
+            : await toolFunction(functionArgs);
           
           toolResults.push({
             toolCallId: toolCall.id,
@@ -233,7 +272,7 @@ export async function runAgentStream(
           if (functionName === 'generate_icon_set' && result.icons) {
             // 发送生成日志
             for (const icon of result.icons) {
-              onEvent({ type: 'tool_log', name: functionName, message: `✓ ${icon.platform} - ${icon.styleName}` });
+              onEvent({ type: 'tool_log', name: functionName, message: `✓ ${icon.platform} - ${icon.styleName} (${icon.mainBody})` });
             }
             // 批量生成的情况，逐个发送图标
             for (const icon of result.icons) {
@@ -276,9 +315,9 @@ export async function runAgentStream(
 
       // 继续对话，看是否需要更多工具调用
       const nextResponse = await client.chat.completions.create({
-        model: 'gemini-3-flash-preview',
+        model: 'gpt-5.1',
         messages: currentMessages,
-        tools: toolDefinitions,
+        tools: dynamicToolDefinitions,
         tool_choice: 'auto',
       });
 
@@ -308,9 +347,9 @@ export async function runAgentStream(
 }
 
 // 非流式版本
-export async function runAgent(userMessage: string, history: Message[] = [], generateMultiple: boolean = false) {
+export async function runAgent(userMessage: string, history: Message[] = [], generateMultiple: boolean = false, customStyles?: string[]) {
   const events: StreamEvent[] = [];
-  await runAgentStream(userMessage, history, generateMultiple, (e) => events.push(e));
+  await runAgentStream(userMessage, history, generateMultiple, customStyles, (e) => events.push(e));
   
   const toolCalls = events
     .filter(e => e.type === 'tool_result' && e.svg)

@@ -1,46 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
-
 interface IconPreviewProps {
   svg: string;
   size?: number;
   className?: string;
   style?: React.CSSProperties;
   showBackground?: boolean;
-}
-
-// 标准化 SVG 以确保正确渲染
-function normalizeSvg(svg: string): string {
-  let normalized = svg;
-  
-  // 确保有 viewBox
-  if (!normalized.includes('viewBox')) {
-    normalized = normalized.replace(/<svg/, '<svg viewBox="0 0 120 120"');
-  }
-  
-  // 移除固定宽高，让 SVG 自适应容器
-  normalized = normalized
-    .replace(/\s+width="[^"]*"/g, '')
-    .replace(/\s+height="[^"]*"/g, '');
-  
-  // 确保有 xmlns
-  if (!normalized.includes('xmlns=')) {
-    normalized = normalized.replace(/<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
-  }
-  
-  // 为滤镜 ID 添加唯一前缀，避免多个 SVG 之间的 ID 冲突
-  const uniqueId = Math.random().toString(36).slice(2, 8);
-  normalized = normalized
-    .replace(/id="([^"]+)"/g, `id="$1-${uniqueId}"`)
-    .replace(/url\(#([^)]+)\)/g, `url(#$1-${uniqueId})`);
-  
-  // 添加 preserveAspectRatio 确保图标居中
-  if (!normalized.includes('preserveAspectRatio')) {
-    normalized = normalized.replace(/<svg/, '<svg preserveAspectRatio="xMidYMid meet"');
-  }
-  
-  return normalized;
 }
 
 export default function IconPreview({ 
@@ -50,8 +15,6 @@ export default function IconPreview({
   style = {},
   showBackground = false 
 }: IconPreviewProps) {
-  const normalizedSvg = useMemo(() => normalizeSvg(svg), [svg]);
-  
   return (
     <div 
       className={className}
@@ -61,23 +24,12 @@ export default function IconPreview({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        overflow: 'visible', // 允许滤镜效果溢出
         background: showBackground ? '#f8fafc' : 'transparent',
         borderRadius: showBackground ? 8 : 0,
         ...style
       }}
-    >
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-        dangerouslySetInnerHTML={{ __html: normalizedSvg }}
-      />
-    </div>
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
   );
 }
 
@@ -93,8 +45,6 @@ export function IconThumbnail({
   onClick?: () => void;
   label?: string;
 }) {
-  const normalizedSvg = useMemo(() => normalizeSvg(svg), [svg]);
-  
   return (
     <div
       onClick={onClick}
@@ -116,15 +66,9 @@ export function IconThumbnail({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          overflow: 'visible',
-          padding: 4,
         }}
-      >
-        <div
-          style={{ width: '100%', height: '100%' }}
-          dangerouslySetInnerHTML={{ __html: normalizedSvg }}
-        />
-      </div>
+        dangerouslySetInnerHTML={{ __html: svg }}
+      />
       
       {selected && (
         <div style={{

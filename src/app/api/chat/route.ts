@@ -3,7 +3,7 @@ import { runAgentStream } from '@/lib/agent';
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, history = [], generateMultiple = false } = await request.json();
+    const { message, history = [], generateMultiple = false, styles } = await request.json();
 
     if (!message) {
       return new Response(JSON.stringify({ error: 'Message is required' }), { 
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          await runAgentStream(message, history, generateMultiple, (event) => {
+          await runAgentStream(message, history, generateMultiple, styles, (event) => {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
           });
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));

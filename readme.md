@@ -55,7 +55,7 @@ const toolFunctions = {
 export async function runAgentStream(userMessage, history, onEvent) {
   // 调用 LLM，传入工具定义
   const response = await client.chat.completions.create({
-    model: 'gpt-4.1',
+    model: 'gpt-5.1',
     messages,
     tools: toolDefinitions,      // 告诉 AI 可用工具
     tool_choice: 'required',     // 强制调用工具
@@ -149,7 +149,7 @@ while (true) {
 ```typescript
 // 最小示例
 const response = await openai.chat.completions.create({
-  model: 'gpt-4',
+  model: 'gpt-5.1',
   messages: [{ role: 'user', content: '生成一个太阳图标' }],
   tools: [{
     type: 'function',

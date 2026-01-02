@@ -1,10 +1,13 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { gsap } from 'gsap';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import IconPreview, { IconThumbnail } from './IconPreview';
 import ToolCallLog from './ToolCallLog';
+import StyleSelector, { DEFAULT_STYLES } from './StyleSelector';
 
 interface ToolLog {
   name: string;
@@ -37,6 +40,10 @@ interface Platform {
   sizes: number[];
 }
 
+interface AIconicProps {
+  initialPrompt?: string | null;
+}
+
 const platforms: Platform[] = [
   { name: 'Web', formats: ['svg', 'png'], sizes: [16, 32, 64, 128, 256] },
   { name: 'Windows', formats: ['ico', 'png'], sizes: [16, 24, 32, 48, 256] },
@@ -45,12 +52,7 @@ const platforms: Platform[] = [
   { name: 'iOS', formats: ['png'], sizes: [60, 76, 120, 152, 180] },
 ];
 
-const toolDisplayNames: Record<string, string> = {
-  'analyze_icon_main_body': '分析主体',
-  'generate_icon_set': '生成图标',
-  'generate_icon_by_main_body': '生成图标',
-  'save_icon': '保存图标',
-};
+
 
 const promptSuggestions = [
   { icon: '🚀', text: '火箭发射', desc: '科技启动图标' },
@@ -59,7 +61,8 @@ const promptSuggestions = [
   { icon: '🎨', text: '创意设计工具', desc: '设计类应用' },
 ];
 
-export default function AIconic() {
+export default function AIconic({ initialPrompt }: AIconicProps) {
+  const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -72,10 +75,13 @@ export default function AIconic() {
   const [selectedSize, setSelectedSize] = useState(256);
   const [currentToolLogs, setCurrentToolLogs] = useState<ToolLog[]>([]);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [selectedStyleIds, setSelectedStyleIds] = useState<string[]>(DEFAULT_STYLES);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const initialPromptProcessed = useRef(false);
 
-  // 加载会话列表，并自动恢复最近的会话
+  // 加载会话列表
   useEffect(() => {
     const init = async () => {
       try {
@@ -84,17 +90,19 @@ export default function AIconic() {
         const sessionList = data.sessions || [];
         setSessions(sessionList);
         
-        // 自动加载最近的会话
-        if (sessionList.length > 0) {
-          const lastSession = sessionList[0]; // 已按 updatedAt 降序排列
+        // 如果有 initialPrompt，不加载历史会话，直接开始新会话
+        if (!initialPrompt && sessionList.length > 0) {
+          const lastSession = sessionList[0];
           await loadSession(lastSession.id);
         }
       } catch (e) {
         console.error('Failed to load sessions:', e);
+      } finally {
+        setIsInitialized(true);
       }
     };
     init();
-  }, []);
+  }, [initialPrompt]);
 
   // 滚动到底部
   useEffect(() => {
@@ -110,6 +118,17 @@ export default function AIconic() {
       }
     }
   }, [generatedIcons.length]);
+
+  // 处理 initialPrompt - 自动触发生成
+  useEffect(() => {
+    if (isInitialized && initialPrompt && !initialPromptProcessed.current && !loading) {
+      initialPromptProcessed.current = true;
+      // 延迟一点确保组件完全就绪
+      setTimeout(() => {
+        handleSend(initialPrompt);
+      }, 100);
+    }
+  }, [isInitialized, initialPrompt, loading]);
 
   const loadSessions = async () => {
     try {
@@ -218,11 +237,19 @@ export default function AIconic() {
     const messageToSend = directMessage || input.trim();
     if (!messageToSend || loading) return;
     
-    setInput('');
-    setLoading(true);
-    setCurrentToolLogs([]);
+    const userMessage: Message = { role: 'user', content: messageToSend };
+    
+    // 【关键】使用 flushSync 强制同步更新 UI，确保用户消息立即显示
+    flushSync(() => {
+      setInput('');
+      setLoading(true);
+      setCurrentToolLogs([]);
+      setMessages(prev => [...prev, userMessage]);
+      setGeneratedIcons([]);
+      setSelectedIcon(null);
+    });
 
-    // 确保有会话
+    // 后台处理会话创建和消息保存
     let sessionId = currentSessionId;
     if (!sessionId) {
       sessionId = await createNewSession();
@@ -232,14 +259,7 @@ export default function AIconic() {
       }
     }
 
-    const userMessage: Message = { role: 'user', content: messageToSend };
-    
-    // 立即显示用户消息，不等待保存
-    setMessages(prev => [...prev, userMessage]);
-    setGeneratedIcons([]);
-    setSelectedIcon(null);
-
-    // 异步保存用户消息（不阻塞 UI）
+    // 异步保存用户消息（不阻塞后续流程）
     saveMessage(sessionId, userMessage);
 
     try {
@@ -250,6 +270,7 @@ export default function AIconic() {
           message: messageToSend,
           history: messages.map(m => ({ role: m.role, content: m.content })),
           generateMultiple: true,
+          styles: selectedStyleIds,
         }),
       });
 
@@ -431,6 +452,15 @@ export default function AIconic() {
         <div style={{ height: '56px', padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
+              onClick={() => router.push('/')}
+              style={{ padding: '6px', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '6px', color: '#6b7280' }}
+              title="返回首页"
+            >
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <button
               onClick={() => setShowSidebar(!showSidebar)}
               style={{ padding: '6px', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '6px', color: '#6b7280' }}
             >
@@ -539,6 +569,11 @@ export default function AIconic() {
         <div style={{ height: '56px', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', borderBottom: '1px solid #e5e7eb' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <span style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>工作区</span>
+            <StyleSelector 
+              selectedStyles={selectedStyleIds} 
+              onStylesChange={setSelectedStyleIds}
+              maxSelection={4}
+            />
             <div style={{ display: 'flex', gap: '4px' }}>
               {platforms.map(p => (
                 <button key={p.name} onClick={() => { setSelectedPlatform(p); setSelectedFormat(p.formats[0]); setSelectedSize(p.sizes[2] || p.sizes[0]); }}

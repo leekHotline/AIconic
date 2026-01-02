@@ -164,41 +164,59 @@ export async function generateIconByMainBody(params: {
 }
 
 // ============================================
-// 工具 3: 一键生成 4 种风格图标
+// 工具 3: 一键生成多种风格图标
 // ============================================
 /**
- * 根据主体元素，一次性生成 4 种平台风格的图标
+ * 根据主体元素，一次性生成多种平台风格的图标
  * 
- * @param params.mainBody - 主体元素
- * @returns 4 个不同风格的 SVG 图标
+ * @param params.mainBody - 单个主体元素（兼容旧逻辑）
+ * @param params.mainBodies - 多个主体元素，每个风格用不同主体
+ * @param params.styles - 可选的风格列表，默认为 4 种基础风格
+ * @returns 多个不同风格的 SVG 图标
  */
 export async function generateIconSet(params: {
-  mainBody: string;
+  mainBody?: string;
+  mainBodies?: string[];
+  styles?: string[];
 }): Promise<{
   success: boolean;
-  icons?: Array<{ svg: string; style: string; styleName: string; platform: string }>;
+  icons?: Array<{ svg: string; style: string; styleName: string; platform: string; mainBody: string }>;
   error?: string;
 }> {
-  const { mainBody } = params;
+  const { mainBody, mainBodies, styles: customStyles } = params;
 
-  console.log(`[Tool:generateIconSet] 批量生成: ${mainBody}`);
+  // 使用自定义风格或默认风格
+  const stylesToUse = customStyles && customStyles.length > 0 
+    ? customStyles 
+    : ['appstore', 'material', 'fluent', 'neon'];
 
-  const styles = ['appstore', 'material', 'fluent', 'neon'] as const;
+  // 确定每个风格使用的主体
+  // 如果有 mainBodies 数组，每个风格用不同主体；否则都用同一个 mainBody
+  const bodies = mainBodies && mainBodies.length > 0 ? mainBodies : [mainBody || '图标'];
+  
+  console.log(`[Tool:generateIconSet] 批量生成: ${bodies.join(', ')} (${stylesToUse.length} 种风格)`);
   
   const results = await Promise.all(
-    styles.map(async (style) => {
+    stylesToUse.map(async (style, index) => {
       const config = COLOR_SCHEMES[style];
-      const svg = await generateIconFromMainBody({ mainBody, style });
+      if (!config) {
+        console.warn(`[Tool:generateIconSet] 未知风格: ${style}`);
+        return null;
+      }
+      // 循环使用主体列表，如果主体数量少于风格数量则循环
+      const bodyForStyle = bodies[index % bodies.length];
+      const svg = await generateIconFromMainBody({ mainBody: bodyForStyle, style });
       return {
         svg: svg || '',
         style,
         styleName: config.name,
         platform: config.platform,
+        mainBody: bodyForStyle,
       };
     })
   );
 
-  const validIcons = results.filter(r => r.svg);
+  const validIcons = results.filter((r): r is NonNullable<typeof r> => r !== null && r.svg !== '');
 
   if (validIcons.length === 0) {
     return { success: false, error: '生成失败' };
