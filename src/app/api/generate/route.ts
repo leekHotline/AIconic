@@ -21,8 +21,7 @@ export async function POST(request: NextRequest) {
     const [icon] = await db.insert(icons).values({
       name: name || prompt.slice(0, 50),
       prompt,
-      svgContent,
-      style,
+      svgContent: svgContent,
     }).returning();
 
     return NextResponse.json({ 

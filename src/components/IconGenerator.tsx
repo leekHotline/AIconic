@@ -97,7 +97,7 @@ export default function IconGenerator() {
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">预览</h2>
-            <IconPreview svgContent={generatedIcon.svgContent} size={selectedSize} />
+            <IconPreview svg={generatedIcon.svgContent} size={selectedSize} />
           </div>
           
           <div className="space-y-4">
