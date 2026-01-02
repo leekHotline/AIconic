@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const buffer = await convertSVG(svgContent, format, size);
     const mimeType = getMimeType(format);
 
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       headers: {
         'Content-Type': mimeType,
         'Content-Disposition': `attachment; filename="icon-${size}.${format}"`,
