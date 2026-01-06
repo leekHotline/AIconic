@@ -10,8 +10,18 @@ export default function Navbar() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.from('.nav-logo', { x: -30, opacity: 0, duration: 0.8, ease: 'power3.out' });
-      gsap.from('.nav-link', { y: -20, opacity: 0, stagger: 0.1, duration: 0.5, ease: 'power3.out', delay: 0.3 });
+      gsap.fromTo('.nav-logo', 
+        { x: -30, opacity: 0 }, 
+        { x: 0, opacity: 1, duration: 0.8, ease: 'power3.out' }
+      );
+      gsap.fromTo('.nav-link', 
+        { y: -20, opacity: 0 }, 
+        { y: 0, opacity: 1, stagger: 0.1, duration: 0.5, ease: 'power3.out', delay: 0.3 }
+      );
+      gsap.fromTo('.nav-cta', 
+        { scale: 0.9, opacity: 0 }, 
+        { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.7)', delay: 0.5 }
+      );
     }, navRef);
     return () => ctx.revert();
   }, []);
@@ -28,14 +38,19 @@ export default function Navbar() {
       }}>
         <div className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <div style={{
+            <img src="/icon.svg"
+            alt="Logo"
+            style={{ height:'40px', width: '40px' , borderRadius:'12px'}}
+            >
+            </img>
+          {/* <div style={{
             width: '40px', height: '40px', borderRadius: '12px',
             background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 4px 14px rgba(99,102,241,0.4)'
           }}>
             <span style={{ color: '#fff', fontWeight: 700, fontSize: '18px' }}>A</span>
-          </div>
+          </div> */}
           <span style={{ fontWeight: 700, fontSize: '20px', color: '#111' }}>AIconic</span>
         </div>
 
@@ -54,7 +69,7 @@ export default function Navbar() {
           ))}
           <button
             onClick={() => router.push('/icon')}
-            className="nav-link"
+            className="nav-cta"
             style={{
               padding: '10px 24px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
               color: '#fff', fontSize: '15px', fontWeight: 500, borderRadius: '10px',

@@ -17,9 +17,9 @@ const features = [
   {
     icon: '⚡',
     title: '秒级生成',
-    desc: '先进的生成算法，3秒内输出4种专业风格图标',
+    desc: '先进的生成算法，10秒内输出4种专业风格图标',
     gradient: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-    stats: '< 3 秒'
+    stats: '< 10 秒'
   },
   {
     icon: '🎨',

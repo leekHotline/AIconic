@@ -205,10 +205,21 @@ export async function runAgentStream(
 → 调用 generate_icon_set(mainBodies: ["灯泡", "铅笔", "调色板", "拼接方块"])
 → 生成 4 个图标，每个风格用不同的主体
 
-现在开始，直接调用工具，不要先回复文字。`
+现在开始，直接调用工具，不要先回复文字。
+
+**重要规则：**
+- 不要在文本回复中包含 SVG 代码
+- SVG 代码应该通过工具结果返回，不要作为文本内容输出
+- 文本回复只应该包含简短的说明文字`
     : `你是专业的图标设计师。
 当用户想要生成图标时，先用 analyze_icon_main_body 分析主体，再用 generate_icon_set 生成图标。
 当前可用风格: ${styleEnumStr}
+
+**重要规则：**
+- 不要在文本回复中包含 SVG 代码
+- SVG 代码应该通过工具结果返回，不要作为文本内容输出
+- 文本回复只应该包含简短的说明文字
+
 用中文回复。`;
 
   const messages: Message[] = [
@@ -328,14 +339,23 @@ export async function runAgentStream(
         currentMessages.push(nextMessage);
       } else {
         // 没有更多工具调用，输出最终回复
-        const reply = nextMessage.content || '';
-        onEvent({ type: 'text', content: reply });
+        let reply = nextMessage.content || '';
+        // 过滤掉 SVG 代码，避免在文本中输出
+        reply = reply.replace(/<svg[\s\S]*?<\/svg>/gi, '').trim();
+        if (reply) {
+          onEvent({ type: 'text', content: reply });
+        }
       }
     }
 
     // 如果第一轮就没有工具调用
     if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {
-      onEvent({ type: 'text', content: assistantMessage.content || '' });
+      let content = assistantMessage.content || '';
+      // 过滤掉 SVG 代码，避免在文本中输出
+      content = content.replace(/<svg[\s\S]*?<\/svg>/gi, '').trim();
+      if (content) {
+        onEvent({ type: 'text', content });
+      }
     }
 
   } catch (error) {

@@ -85,19 +85,31 @@ export default function HeroSection() {
         </div>
 
         <h1 style={{ marginBottom: '24px' }}>
-          <div className="hero-title-line" style={{ fontSize: '64px', fontWeight: 800, color: '#111', lineHeight: 1.1 }}>让 AI 为你创造</div>
-          <div className="hero-title-line" style={{ fontSize: '64px', fontWeight: 800, lineHeight: 1.1, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>惊艳的应用图标</div>
+          <div className="hero-title-line" style={{ fontSize: '64px', fontWeight: 700, color: '#111', lineHeight: 1.2 }}>
+            再小的产品，
+          </div>
+          <div className="hero-title-line" style={{ 
+            fontSize: '64px', 
+            fontWeight: 800, 
+            lineHeight: 1.2, 
+            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)', 
+            WebkitBackgroundClip: 'text', 
+            WebkitTextFillColor: 'transparent' 
+          }}>
+            也值得被世界认出。
+          </div>
         </h1>
 
-        <p className="hero-subtitle" style={{ fontSize: '20px', color: '#64748b', maxWidth: '600px', margin: '0 auto 48px', lineHeight: 1.6 }}>
-          只需描述你的想法，AI 将为你生成符合 App Store、Google Play 等平台规范的专业级图标
+        <p className="hero-subtitle" style={{ fontSize: '20px', color: '#64748b', maxWidth: '650px', margin: '0 auto 48px', lineHeight: 1.6 }}>
+          AIconic 深度理解您的产品内核，为每个创意注入视觉灵魂。<br />
+          <strong>10 秒生成专业商用图标</strong>，开启您的品牌第一步。
         </p>
 
         <form onSubmit={handleSubmit} className="hero-input" style={{ maxWidth: '640px', margin: '0 auto 32px' }}>
           <div style={{ position: 'relative', background: '#fff', borderRadius: '20px', boxShadow: '0 8px 40px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)', padding: '8px', transition: 'all 0.3s' }}
             onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 12px 50px rgba(99,102,241,0.15), 0 0 0 1px rgba(99,102,241,0.1)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 8px 40px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
-            <input type="text" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="描述你想要的图标，如：一个现代化的金融理财 App 图标..."
+            <input type="text" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="描述你想要的图标，如：一个极简风格的 AI 笔记应用图标"
               style={{ width: '100%', padding: '18px 70px 18px 24px', fontSize: '17px', border: 'none', outline: 'none', background: 'transparent', color: '#111', borderRadius: '16px' }} />
             <button type="submit" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', width: '52px', height: '52px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: '14px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(99,102,241,0.4)', transition: 'transform 0.2s' }}
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)'; }}
@@ -110,7 +122,7 @@ export default function HeroSection() {
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px' }}>
           {quickTags.map((tag, idx) => (
             <button key={idx} onClick={() => setPrompt(tag.text)} className="hero-tag"
-              style={{ padding: '10px 18px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', fontSize: '14px', color: '#374151', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+              style={{ opacity: 1,padding: '10px 18px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', fontSize: '14px', color: '#374151', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = tag.color; e.currentTarget.style.background = `${tag.color}10`; e.currentTarget.style.transform = 'translateY(-2px)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.background = '#fff'; e.currentTarget.style.transform = 'translateY(0)'; }}>
               <span style={{ fontSize: '16px' }}>{tag.icon}</span><span>{tag.text}</span>

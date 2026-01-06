@@ -21,12 +21,35 @@ import { eq, desc, like } from 'drizzle-orm';
 import { generateIconFromMainBody, COLOR_SCHEMES } from './iconGenerator';
 import type { InferInsertModel } from 'drizzle-orm';
 
+import Exa from 'exa-js';
+import dotenv from 'dotenv'
+dotenv.config()
+
 type NewIcon = InferInsertModel<typeof icons>;
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
   baseURL: process.env.OPENAI_BASE_URL,
 });
+
+
+export async function WebSearch(params: { keyword: string }) {
+  const exa_client = new Exa(process.env.EXA_API_KEY);
+
+  const result = await exa_client.searchAndContents(
+    params.keyword,
+    {
+      type: 'auto',
+      text: true
+    }
+  );
+
+  return {
+    success: true,
+    data: result
+  };
+}
+
 
 // ============================================
 // 工具 1: 分析图标主体元素

@@ -39,18 +39,26 @@ export default function Footer() {
           {/* 品牌区 */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-              <div style={{
+              <div className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <img src="/icon.svg"
+            alt="Logo"
+            style={{ height:'40px', width: '40px' , borderRadius:'12px'}}
+            >
+            </img> </div>
+              {/* <div style={{
                 width: '44px', height: '44px', borderRadius: '14px',
                 background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 boxShadow: '0 8px 24px rgba(99,102,241,0.3)'
               }}>
                 <span style={{ color: '#fff', fontWeight: 700, fontSize: '20px' }}>A</span>
-              </div>
+              </div> */}
               <span style={{ fontWeight: 700, fontSize: '22px', color: '#111' }}>AIconic</span>
             </div>
             <p style={{ fontSize: '15px', color: '#64748b', lineHeight: 1.7, maxWidth: '300px' }}>
-              AI 驱动的下一代图标生成器，让每个应用都拥有专业级的视觉标识。
+              再小的产品，
+也值得被世界认出。
             </p>
           </div>
 
