@@ -229,6 +229,9 @@ export async function runAgentStream(
   ];
 
   try {
+    // 记录已执行的工具调用，避免重复
+    const executedCalls = new Set<string>();
+    
     // 第一轮: AI 决定调用哪些工具
     const response = await client.chat.completions.create({
       model: 'gpt-5.1',
@@ -251,6 +254,20 @@ export async function runAgentStream(
         
         const functionName = toolCall.function.name;
         const functionArgs = JSON.parse(toolCall.function.arguments);
+        
+        // 生成调用签名，用于去重
+        const callSignature = `${functionName}:${JSON.stringify(functionArgs)}`;
+        if (executedCalls.has(callSignature)) {
+          console.log(`[Agent] 跳过重复调用: ${functionName}`);
+          // 返回之前的结果
+          toolResults.push({
+            toolCallId: toolCall.id,
+            functionName,
+            result: { skipped: true, reason: '重复调用' },
+          });
+          continue;
+        }
+        executedCalls.add(callSignature);
         
         // 发送工具开始事件
         onEvent({ type: 'tool_start', name: functionName, args: functionArgs });

@@ -249,20 +249,19 @@ export default function AIconic({ initialPrompt }: AIconicProps) {
       setSelectedIcon(null);
     });
 
-    // 后台处理会话创建和消息保存
+    // 后台处理会话创建（不阻塞 UI）
     let sessionId = currentSessionId;
-    if (!sessionId) {
-      sessionId = await createNewSession();
-      if (!sessionId) {
-        setLoading(false);
-        return;
-      }
-    }
+    const sessionPromise = !sessionId 
+      ? createNewSession().then(id => { sessionId = id; return id; })
+      : Promise.resolve(sessionId);
 
-    // 异步保存用户消息（不阻塞后续流程）
-    saveMessage(sessionId, userMessage);
+    // 异步保存用户消息（等待 session 创建完成后保存，但不阻塞 chat 请求）
+    sessionPromise.then(sid => {
+      if (sid) saveMessage(sid, userMessage);
+    });
 
     try {
+      // 同时发起 chat 请求，不等待 session 创建
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -360,12 +359,18 @@ export default function AIconic({ initialPrompt }: AIconicProps) {
       setMessages(prev => [...prev, assistantMessage]);
       setCurrentToolLogs([]);
 
-      // 保存助手消息和图标
-      await saveMessage(sessionId, assistantMessage, newIcons);
+      // 保存助手消息和图标（等待 session 创建完成）
+      const finalSessionId = await sessionPromise;
+      if (finalSessionId) {
+        await saveMessage(finalSessionId, assistantMessage, newIcons);
+      }
     } catch (error) {
       const errorMessage: Message = { role: 'assistant', content: '生成失败，请重试。' };
       setMessages(prev => [...prev, errorMessage]);
-      await saveMessage(sessionId, errorMessage);
+      const finalSessionId = await sessionPromise;
+      if (finalSessionId) {
+        await saveMessage(finalSessionId, errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -468,7 +473,13 @@ export default function AIconic({ initialPrompt }: AIconicProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: '14px' }}>A</div>
+            <img src="/icon.svg"
+            alt="Logo"
+            style={{ height:'40px', width: '40px' , borderRadius:'12px'}}
+            >
+            </img>
+            {/* <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: '14px' }}>A</div> */}
+
             <span style={{ fontWeight: 600, color: '#1f2937' }}>AIconic</span>
           </div>
           <button onClick={handleNewChat} style={{ padding: '6px', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '6px', color: '#9ca3af' }}>
