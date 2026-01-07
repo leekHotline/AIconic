@@ -1,0 +1,29 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#ec4899" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <rect x="10" y="10" width="100" height="100" rx="24" fill="url(#bg)" filter="url(#shadow)"/>
+  <rect x="10" y="10" width="100" height="50" rx="24" fill="#fff" opacity="0.15"/>
+  <g filter="url(#glow)"><rect x="40" y="40" width="40" height="40" rx="8" fill="#fff" opacity="0.12"/>
+<rect x="44" y="44" width="32" height="32" rx="6" fill="#fff" opacity="0.2"/>
+<path d="M60 37 L78 55 L60 73 L42 55 Z" fill="#fff" opacity="0.4"/>
+<path d="M60 45 L70 55 L60 65 L50 55 Z" fill="#fff"/>
+<circle cx="60" cy="55" r="4" fill="#ec4899"/>
+<path d="M45 38 L52 38" stroke="#ec4899" stroke-width="2" stroke-linecap="round" fill="none"/>
+<path d="M68 82 L75 82" stroke="#ec4899" stroke-width="2" stroke-linecap="round" fill="none"/>
+<circle cx="46" cy="78" r="2" fill="#ec4899" opacity="0.9"/>
+<circle cx="74" cy="38" r="2" fill="#ec4899" opacity="0.9"/></g>
+</svg>

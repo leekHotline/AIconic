@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <!-- 主渐变 - 紫蓝色调 -->
+    <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="50%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#EC4899"/>
+    </linearGradient>
+    
+    <!-- 光晕效果 -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- 内部渐变 -->
+    <linearGradient id="innerGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#A78BFA"/>
+      <stop offset="100%" stop-color="#F472B6"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- 外框 - 圆角矩形代表"图标" -->
+  <rect x="4" y="4" width="56" height="56" rx="14" ry="14" 
+        fill="url(#mainGradient)" filter="url(#glow)"/>
+  
+  <!-- 内部白色区域 -->
+  <rect x="10" y="10" width="44" height="44" rx="10" ry="10" fill="white" opacity="0.95"/>
+  
+  <!-- AI 神经网络节点 - 代表智能 -->
+  <circle cx="22" cy="22" r="4" fill="url(#mainGradient)"/>
+  <circle cx="42" cy="22" r="4" fill="url(#mainGradient)"/>
+  <circle cx="32" cy="32" r="5" fill="url(#innerGradient)"/>
+  <circle cx="22" cy="42" r="4" fill="url(#mainGradient)"/>
+  <circle cx="42" cy="42" r="4" fill="url(#mainGradient)"/>
+  
+  <!-- 连接线 - 代表神经网络/Agent 连接 -->
+  <path d="M22 22 L32 32 L42 22" stroke="url(#mainGradient)" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <path d="M22 42 L32 32 L42 42" stroke="url(#mainGradient)" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <path d="M22 22 L22 42" stroke="url(#mainGradient)" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.4"/>
+  <path d="M42 22 L42 42" stroke="url(#mainGradient)" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.4"/>
+  
+  <!-- 中心光点 - 代表创意/生成 -->
+  <circle cx="32" cy="32" r="2" fill="white"/>
+</svg>

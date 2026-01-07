@@ -4,20 +4,21 @@ import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { useI18n } from '@/lib/i18n';
 
+// 社区示例图标
+const communityExamples = [
+  { id: 'agent_center', name: 'Agent Center', src: '/community_example/agent_center.svg' },
+  { id: 'aiconic-logo', name: 'AIconic Logo', src: '/community_example/aiconic-logo.svg' },
+  { id: 'cloud-storage', name: 'Cloud Storage', src: '/community_example/cloud-storage.svg' },
+  { id: 'data-analytics', name: 'Data Analytics', src: '/community_example/data-analytics.svg' },
+  { id: 'data-table', name: 'Data Table', src: '/community_example/data-table.svg' },
+  { id: 'security-shield', name: 'Security Shield', src: '/community_example/security-shield.svg' },
+];
+
 export default function ShowcaseSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [animated, setAnimated] = useState(false);
   const { t } = useI18n();
-
-  const showcaseItems = [
-    { gradient: 'linear-gradient(135deg, #667eea, #764ba2)', icon: '🎨', labelKey: 'showcase.item1' },
-    { gradient: 'linear-gradient(135deg, #f093fb, #f5576c)', icon: '💎', labelKey: 'showcase.item2' },
-    { gradient: 'linear-gradient(135deg, #4facfe, #00f2fe)', icon: '⚡', labelKey: 'showcase.item3' },
-    { gradient: 'linear-gradient(135deg, #43e97b, #38f9d7)', icon: '🌿', labelKey: 'showcase.item4' },
-    { gradient: 'linear-gradient(135deg, #fa709a, #fee140)', icon: '🔥', labelKey: 'showcase.item5' },
-    { gradient: 'linear-gradient(135deg, #a8edea, #fed6e3)', icon: '✨', labelKey: 'showcase.item6' },
-  ];
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -53,23 +54,43 @@ export default function ShowcaseSection() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-          {showcaseItems.map((item, idx) => (
-            <div key={idx} className="showcase-item" onMouseEnter={() => setHoveredIdx(idx)} onMouseLeave={() => setHoveredIdx(null)}
+          {communityExamples.map((item, idx) => (
+            <div key={item.id} className="showcase-item" onMouseEnter={() => setHoveredIdx(idx)} onMouseLeave={() => setHoveredIdx(null)}
               style={{
-                position: 'relative', aspectRatio: '1', borderRadius: '24px', background: item.gradient, cursor: 'pointer', overflow: 'hidden',
-                boxShadow: hoveredIdx === idx ? '0 20px 40px rgba(0,0,0,0.15)' : '0 6px 24px rgba(0,0,0,0.06)',
+                position: 'relative', aspectRatio: '1', borderRadius: '24px',
+                background: '#f8fafc',
+                cursor: 'pointer', overflow: 'hidden',
+                boxShadow: hoveredIdx === idx ? '0 20px 40px rgba(0,0,0,0.12)' : '0 4px 16px rgba(0,0,0,0.04)',
                 transform: hoveredIdx === idx ? 'scale(1.05) translateY(-4px)' : hoveredIdx !== null ? 'scale(0.98)' : 'scale(1)',
                 transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
                 filter: hoveredIdx !== null && hoveredIdx !== idx ? 'blur(1px)' : 'none',
-                opacity: hoveredIdx !== null && hoveredIdx !== idx ? 0.75 : (animated ? 1 : 0)
+                opacity: hoveredIdx !== null && hoveredIdx !== idx ? 0.75 : (animated ? 1 : 0),
+                border: '1px solid rgba(0,0,0,0.06)'
               }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, transparent 50%, rgba(0,0,0,0.08) 100%)', opacity: hoveredIdx === idx ? 1 : 0.7, transition: 'opacity 0.3s' }} />
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: hoveredIdx === idx ? 'translate(-50%, -50%) scale(1.12)' : 'translate(-50%, -50%) scale(1)', fontSize: '52px', transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)' }}>
-                {item.icon}
+              
+              {/* 图标展示 */}
+              <div style={{ 
+                position: 'absolute', top: '50%', left: '50%', 
+                transform: hoveredIdx === idx ? 'translate(-50%, -50%) scale(1.1)' : 'translate(-50%, -50%)',
+                width: '70%', height: '70%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}>
+                <img src={item.src} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
-              <div style={{ position: 'absolute', bottom: '14px', left: '14px', right: '14px', padding: '10px 12px', background: 'rgba(255,255,255,0.95)', borderRadius: '10px', backdropFilter: 'blur(10px)', transform: hoveredIdx === idx ? 'translateY(0)' : 'translateY(60px)', opacity: hoveredIdx === idx ? 1 : 0, transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: '#111' }}>{t(item.labelKey)}</div>
-                <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>AI Generated</div>
+
+              {/* 悬停信息卡片 */}
+              <div style={{ 
+                position: 'absolute', bottom: '14px', left: '14px', right: '14px', 
+                padding: '12px 14px', background: 'rgba(255,255,255,0.95)', borderRadius: '12px', 
+                backdropFilter: 'blur(10px)', 
+                transform: hoveredIdx === idx ? 'translateY(0)' : 'translateY(60px)', 
+                opacity: hoveredIdx === idx ? 1 : 0, 
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#111' }}>{item.name}</div>
+                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>Community</div>
               </div>
             </div>
           ))}
