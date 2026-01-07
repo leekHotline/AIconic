@@ -193,18 +193,36 @@ if (response.tool_calls) {
 
 核心就是 **让 AI 当"调度员"，你写"工人"（工具函数）**。
 
+#### Agent 调用工具的流程：
+
+#### 1. agent.ts 定义工具 (toolDefinitions) → 告诉 AI 有哪些工具
+#### 2. agent.ts 映射函数 (toolFunctions) → 工具名 → 实际函数
+#### 3. tools.ts 实现函数 → 执行具体逻辑
+#### 4. AI 根据用户意图选择调用哪个工具
+
+
+
+
 
 #### core sop : git status --short 看看看看未提交的commit，告诉我你做了什么，向我解释 这是我的理解:{your_understand} 解释并对齐
 
 ### Logs 2026更新日志
 
-#### 01-06
+#### 01-06  流式事件响应: 文本 日志 svg代码
 #### onEvent如何实现的，工具是如何发出事件的，agent.ts是如何捕获事件的,sse对象如何发给前端的，是会话中一直监听吗? onEvent 就是一个"喊话器"，agent.ts 拿着它，每当有事发生就喊一声，API route 听到后写入流，前端读取流更新界面。
 #### onEvent是工具函数runAgentStream的一个回调函数，写在参数里面  如何使用?通过创建一个写入流，每当onEvent被调用，就把数据写入流writer.write(event.json()) 并返回sse响应  前端通过reader.read()持续读取数据流 sse是服务器单向推送数据流给客户端的协议
 
 
 
-#### 01-07
+#### 01-07 中英语言 谷歌认证 用户会话
 #### i18n翻译所有上下文，文本中英翻译映射  添加图标 所有页面组件使用t()函数来获取翻译文本
 #### 对接谷歌登录认证 next-auth 新增认证模块接口 provider配置谷歌认证服务提供者 用户表和会话表相关联 登录按钮组件提供会话 提供认证对象包装 获取id，用户名和邮箱，用户头像 将本来的登录注册认证从浏览器本地切换到谷歌的signIn,signOut 会话接口获取当前用户
 #### db下的schemas新增用户表 会话表的用户id换成users.id
+
+#### 字段类型不匹配，用as any确保任何类型都可以通过 drizzle类型缓存未更新 pnpm db:generate重新生成类型更好  外圆，竖轴椭圆，横轴椭圆
+
+#### 用户意图识别 创建平面简约风格插件和插件平面简约风格图标如何意图分界的?
+#### 通过关键词优先级来识别用户 风格 插件 新建-> 插件风格  生成 图标 做 -> 图标
+#### Agent需要用户填写所有必填参数（id, name, colors, svgTemplate）才能调用工具
+#### 没有的参数可以让ai自动生成
+#### 社区风格是动态加载的 不在静态的 COLOR_SCHEMES 中 使用 getStylePlugin 并先加载社区风格

@@ -1,0 +1,35 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="50%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+    <linearGradient id="shine4" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.25"/>
+      <stop offset="40%" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff"/>
+      <stop offset="100%" stop-color="#d1fae5"/>
+    </linearGradient>
+    <filter id="shadow4" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#059669" flood-opacity="0.4"/>
+    </filter>
+    <filter id="shieldShadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#047857" flood-opacity="0.3"/>
+    </filter>
+    <linearGradient id="check" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+  </defs>
+  <rect x="10" y="10" width="100" height="100" rx="26" fill="url(#bg4)" filter="url(#shadow4)"/>
+  <rect x="10" y="10" width="100" height="100" rx="26" fill="url(#shine4)"/>
+  <g filter="url(#shieldShadow)">
+    <path d="M60 18 L92 32 L92 58 Q92 88 60 102 Q28 88 28 58 L28 32 Z" fill="url(#shield)"/>
+  </g>
+  <path d="M60 26 L84 38 L84 58 Q84 82 60 94 Q36 82 36 58 L36 38 Z" fill="none" stroke="#10b981" stroke-width="1.5" opacity="0.4"/>
+  <path d="M46 58 L54 68 L74 46" stroke="url(#check)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <ellipse cx="60" cy="36" rx="16" ry="4" fill="#fff" opacity="0.4"/>
+</svg>

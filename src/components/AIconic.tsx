@@ -89,6 +89,7 @@ export default function AIconic({ initialPrompt }: AIconicProps) {
   const [showSidebar, setShowSidebar] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [selectedStyleIds, setSelectedStyleIds] = useState<string[]>(DEFAULT_STYLES);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
 
   const promptSuggestions = [
     { icon: '🚀', textKey: 'suggestion.rocket', descKey: 'suggestion.rocket.desc' },
@@ -247,6 +248,10 @@ export default function AIconic({ initialPrompt }: AIconicProps) {
     
     const userMessage: Message = { role: 'user', content: messageToSend };
     
+    // 创建 AbortController
+    const controller = new AbortController();
+    setAbortController(controller);
+    
     flushSync(() => {
       setInput('');
       setLoading(true);
@@ -275,6 +280,7 @@ export default function AIconic({ initialPrompt }: AIconicProps) {
           generateMultiple: true,
           styles: selectedStyleIds,
         }),
+        signal: controller.signal,
       });
 
       const reader = response.body?.getReader();
@@ -365,14 +371,27 @@ export default function AIconic({ initialPrompt }: AIconicProps) {
         await saveMessage(finalSessionId, assistantMessage, newIcons);
       }
     } catch (error) {
-      const errorMessage: Message = { role: 'assistant', content: '生成失败，请重试。' };
-      setMessages(prev => [...prev, errorMessage]);
-      const finalSessionId = await sessionPromise;
-      if (finalSessionId) {
-        await saveMessage(finalSessionId, errorMessage);
+      // 如果是用户取消，不显示错误
+      if (error instanceof Error && error.name === 'AbortError') {
+        const cancelMessage: Message = { role: 'assistant', content: '已取消生成' };
+        setMessages(prev => [...prev, cancelMessage]);
+      } else {
+        const errorMessage: Message = { role: 'assistant', content: '生成失败，请重试。' };
+        setMessages(prev => [...prev, errorMessage]);
+        const finalSessionId = await sessionPromise;
+        if (finalSessionId) {
+          await saveMessage(finalSessionId, errorMessage);
+        }
       }
     } finally {
       setLoading(false);
+      setAbortController(null);
+    }
+  };
+
+  const handleStop = () => {
+    if (abortController) {
+      abortController.abort();
     }
   };
 
@@ -495,13 +514,21 @@ export default function AIconic({ initialPrompt }: AIconicProps) {
         <div style={{ padding: '12px', borderTop: '1px solid #f3f4f6' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f9fafb', borderRadius: '12px', padding: '8px 12px' }}>
             <input type="text" value={input} onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (loading) handleStop(); else handleSend(); } }}
               placeholder={t('workspace.placeholder')} disabled={loading}
               style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: '14px', color: '#1f2937' }} />
-            <button onClick={() => handleSend()} disabled={loading || !input.trim()}
-              style={{ width: '32px', height: '32px', borderRadius: '8px', background: loading || !input.trim() ? '#e5e7eb' : '#6366f1', border: 'none', cursor: loading || !input.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" /></svg>
-            </button>
+            {loading ? (
+              <button onClick={handleStop}
+                style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#ef4444', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}
+                title="停止生成">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
+              </button>
+            ) : (
+              <button onClick={() => handleSend()} disabled={!input.trim()}
+                style={{ width: '32px', height: '32px', borderRadius: '8px', background: !input.trim() ? '#e5e7eb' : '#6366f1', border: 'none', cursor: !input.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" /></svg>
+              </button>
+            )}
           </div>
         </div>
       </div>

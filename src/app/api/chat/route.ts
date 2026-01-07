@@ -12,6 +12,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 创建 AbortController 用于取消请求
+    const abortController = new AbortController();
+    
     // 创建流式响应
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
@@ -40,7 +43,7 @@ export async function POST(request: NextRequest) {
         try {
           await runAgentStream(message, history, generateMultiple, styles, (event) => {
             safeEnqueue(`data: ${JSON.stringify(event)}\n\n`);
-          });
+          }, abortController.signal);
           safeEnqueue('data: [DONE]\n\n');
           safeClose();
         } catch (error) {
@@ -49,6 +52,10 @@ export async function POST(request: NextRequest) {
           safeClose();
         }
       },
+      cancel() {
+        // 当客户端断开连接时取消操作
+        abortController.abort();
+      }
     });
 
     return new Response(stream, {

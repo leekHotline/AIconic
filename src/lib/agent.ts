@@ -36,6 +36,37 @@ const client = new OpenAI({
 // AI 会根据用户输入，自动选择合适的工具
 
 const toolDefinitions: OpenAI.ChatCompletionTool[] = [
+
+  {
+    type: 'function',
+    function: {
+    name: 'create_style_plugin',  // 工具名称
+    description: '创建新的图标风格插件，保存到社区风格库',  // AI 根据这个判断何时调用
+    parameters: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: '风格ID，英文小写，如 cyberpunk' },
+        name: { type: 'string', description: '风格名称，如平面简洁' },
+        platform: { type: 'string', description: '适用平台，如 Creative' },
+        description: { type: 'string', description: '风格描述' },
+        colors: {
+          type: 'object',
+          properties: {
+            primary: { type: 'string', description: '主色，如 #EC4899' },
+            secondary: { type: 'string', description: '次色' },
+            background: { type: 'string', description: '背景色' },
+            accent: { type: 'string', description: '强调色' },
+          },
+          required: ['primary', 'secondary', 'background', 'accent']
+        },
+        svgTemplate: { type: 'string', description: 'SVG 模板代码，用 ${iconContent} 表示图标内容占位' },
+      },
+      required: ['id', 'name', 'colors', 'svgTemplate'],
+    },
+  },
+
+  },
+
   // 工具 1: 分析图标主体
   {
     type: 'function',
@@ -129,6 +160,7 @@ const toolFunctions: Record<string, Function> = {
   generate_icon_by_main_body: tools.generateIconByMainBody,
   generate_icon_set: tools.generateIconSet,
   save_icon: tools.saveIcon,
+  create_style_plugin: tools.createStylePlugin,  // 工具名 -> 函数
 };
 
 type Message = OpenAI.ChatCompletionMessageParam;
@@ -150,7 +182,8 @@ export async function runAgentStream(
   history: Message[] = [], 
   generateMultiple: boolean = false,
   customStyles: string[] | undefined,
-  onEvent: (event: StreamEvent) => void
+  onEvent: (event: StreamEvent) => void,
+  signal?: AbortSignal  // 支持打断
 ) {
   // 获取可用风格列表
   const availableStyles = customStyles && customStyles.length > 0 
@@ -188,39 +221,63 @@ export async function runAgentStream(
   });
 
   // 系统提示词 - 指导 AI 如何使用工具
-  const systemPrompt = generateMultiple 
-    ? `你是专业的图标设计师。生成图标时必须遵循以下流程：
+  const systemPrompt = `你是专业的图标设计助手 AIconic。
 
-**重要：必须按顺序执行两个步骤！**
+**意图识别规则（按优先级）：**
 
-步骤 1: 先调用 analyze_icon_main_body 分析用户描述，获取 4 个主体元素
-步骤 2: 将分析得到的所有主体元素传给 generate_icon_set，每个风格使用不同的主体
+1. **创建风格插件** - 当用户说以下关键词时：
+   - "创建风格"、"新建风格"、"定义风格"、"设计风格模板"
+   - "创建XX插件"、"做一个风格插件"
+   - "我想定义一种新风格"
+   → 调用 create_style_plugin 工具
+
+2. **生成图标** - 当用户说以下关键词时：
+   - "生成图标"、"创建图标"、"设计图标"、"画一个图标"
+   - "用XX风格生成"、"帮我做个图标"
+   - 直接描述图标内容（如"火箭"、"安全防护"、"金融理财"）
+   → 调用 analyze_icon_main_body + generate_icon_set
+
+3. **闲聊/其他** - 不调用工具，直接回复
+
+**区分示例：**
+- "创建一个平面简约风格插件" → 创建风格插件（create_style_plugin）
+- "用平面简约风格生成图标" → 生成图标（generate_icon_set）
+- "帮我做个火箭图标" → 生成图标
+- "我想定义一种赛博朋克风格" → 创建风格插件
+
+**生成图标流程：**
+1. 调用 analyze_icon_main_body 分析主体元素
+2. 调用 generate_icon_set 生成图标
+
+**创建风格插件流程：**
+当用户想创建风格时，直接根据描述生成所有参数并调用 create_style_plugin：
+- id: 根据风格名生成英文ID（如 "平面简约" → "flat_minimal"）
+- name: 风格中文名称
+- platform: iOS/Android/Web/Creative
+- description: 风格特点描述
+- colors: { primary, secondary, background, accent } 根据描述生成配色
+- svgTemplate: 完整 SVG 模板，包含 \${colors.xxx} 和 \${iconContent} 占位符
+
+**不要问用户要参数，直接根据描述自动生成并调用工具！**
+
+SVG 模板示例：
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="\${colors.primary}"/>
+      <stop offset="100%" stop-color="\${colors.secondary}"/>
+    </linearGradient>
+  </defs>
+  <rect x="10" y="10" width="100" height="100" rx="24" fill="url(#bg)"/>
+  <g transform="translate(60,60)"><g transform="translate(-60,-60)">\${iconContent}</g></g>
+</svg>
 
 当前可用风格: ${styleEnumStr}
 
-示例流程:
-用户: "创意设计工具"
-→ 调用 analyze_icon_main_body(userPrompt: "创意设计工具")
-→ 得到 mainBodies: ["灯泡", "铅笔", "调色板", "拼接方块"]
-→ 调用 generate_icon_set(mainBodies: ["灯泡", "铅笔", "调色板", "拼接方块"])
-→ 生成 4 个图标，每个风格用不同的主体
-
-现在开始，直接调用工具，不要先回复文字。
-
 **重要规则：**
+- 创建风格时必须立即调用工具，不要只是文字回复
 - 不要在文本回复中包含 SVG 代码
-- SVG 代码应该通过工具结果返回，不要作为文本内容输出
-- 文本回复只应该包含简短的说明文字`
-    : `你是专业的图标设计师。
-当用户想要生成图标时，先用 analyze_icon_main_body 分析主体，再用 generate_icon_set 生成图标。
-当前可用风格: ${styleEnumStr}
-
-**重要规则：**
-- 不要在文本回复中包含 SVG 代码
-- SVG 代码应该通过工具结果返回，不要作为文本内容输出
-- 文本回复只应该包含简短的说明文字
-
-用中文回复。`;
+- 用中文回复`;
 
   const messages: Message[] = [
     { role: 'system', content: systemPrompt },
@@ -229,15 +286,21 @@ export async function runAgentStream(
   ];
 
   try {
+    // 检查是否已取消
+    if (signal?.aborted) {
+      onEvent({ type: 'done' });
+      return;
+    }
+    
     // 记录已执行的工具调用，避免重复
     const executedCalls = new Set<string>();
     
-    // 第一轮: AI 决定调用哪些工具
+    // 第一轮: AI 决定调用哪些工具（改为 auto，让 AI 自己判断）
     const response = await client.chat.completions.create({
       model: 'gpt-5.1',
       messages,
       tools: dynamicToolDefinitions,
-      tool_choice: generateMultiple ? 'required' : 'auto',
+      tool_choice: 'auto',  // 让 AI 自己决定是否调用工具
     });
 
     const assistantMessage = response.choices[0].message;
@@ -247,9 +310,23 @@ export async function runAgentStream(
 
     // 循环执行工具调用，直到没有更多工具调用
     while (toolCalls && toolCalls.length > 0) {
+      // 检查是否已取消
+      if (signal?.aborted) {
+        onEvent({ type: 'text', content: '已取消操作' });
+        onEvent({ type: 'done' });
+        return;
+      }
+      
       const toolResults: any[] = [];
       
       for (const toolCall of toolCalls) {
+        // 检查是否已取消
+        if (signal?.aborted) {
+          onEvent({ type: 'text', content: '已取消操作' });
+          onEvent({ type: 'done' });
+          return;
+        }
+        
         if (toolCall.type !== 'function') continue;
         
         const functionName = toolCall.function.name;
@@ -281,6 +358,8 @@ export async function runAgentStream(
           onEvent({ type: 'tool_log', name: functionName, message: `批量生成: ${bodies}` });
         } else if (functionName === 'generate_icon_by_main_body') {
           onEvent({ type: 'tool_log', name: functionName, message: `生成: ${functionArgs.mainBody} (${functionArgs.style})` });
+        } else if (functionName === 'create_style_plugin') {
+          onEvent({ type: 'tool_log', name: functionName, message: `创建风格: ${functionArgs.name} (${functionArgs.id})` });
         }
         
         const toolFunction = toolFunctions[functionName];
@@ -325,6 +404,12 @@ export async function runAgentStream(
               name: functionName,
               mainBodies: result.mainBodies,
             });
+          } else if (functionName === 'create_style_plugin') {
+            if (result.success) {
+              onEvent({ type: 'tool_log', name: functionName, message: `✓ 风格 "${result.styleId}" 创建成功` });
+            } else {
+              onEvent({ type: 'tool_log', name: functionName, message: `✗ 创建失败: ${result.error}` });
+            }
           }
         }
       }

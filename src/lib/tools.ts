@@ -16,9 +16,10 @@
 
 import OpenAI from 'openai';
 import { db } from './db';
-import { icons } from '@/db/schema';
+import { icons, communityStyles } from '@/db/schema';
 import { eq, desc, like } from 'drizzle-orm';
-import { generateIconFromMainBody, COLOR_SCHEMES } from './iconGenerator';
+import { generateIconFromMainBody, COLOR_SCHEMES, loadCommunityStyles } from './iconGenerator';
+import { getStylePlugin } from './styles';
 import type { InferInsertModel } from 'drizzle-orm';
 
 import Exa from 'exa-js';
@@ -33,7 +34,93 @@ const client = new OpenAI({
 });
 
 
-export async function WebSearch(params: { keyword: string }) {
+export async function createStylePlugin(params: {
+  id: string;
+  name: string;
+  platform?: string;
+  description?: string;
+  colors: {
+    primary: string;
+    secondary: string;
+    background: string;
+    accent: string;
+  };
+  svgTemplate: string;
+}): Promise<{ success: boolean; styleId?: string; error?: string }> {
+
+  const { id, name, platform, description, colors, svgTemplate } = params;
+
+  console.log(`[Tool:createStylePlugin] 创建风格: ${name} (${id})`);
+
+  try {
+    // 1. 验证参数
+    if (!id || !name || !colors || !svgTemplate) {
+      return { success: false, error: '缺少必要参数' };
+    }
+
+    // 2. 检查风格ID是否已存在
+    const existing = await db.select().from(communityStyles).where(eq(communityStyles.id, id)).limit(1);
+    if (existing.length > 0) {
+      return { success: false, error: `风格 "${id}" 已存在` };
+    }
+
+    // 3. 保存到数据库
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db.insert(communityStyles) as any).values({
+      id,
+      name,
+      platform: platform || 'Community',
+      description: description || '',
+      colors,
+      svgTemplate,
+    });
+
+    console.log(`[Tool:createStylePlugin] 创建成功: ${id}`);
+
+    // 4. 返回结果
+    return {
+      success: true,
+      styleId: id,
+    };
+  } catch (error) {
+    console.error('[Tool:createStylePlugin] 错误:', error);
+    return { success: false, error: '创建失败' };
+  }
+}
+
+// ============================================
+// 工具: 获取社区风格列表
+// ============================================
+export async function getCommunityStyles(): Promise<{
+  success: boolean;
+  styles?: Array<{ id: string; name: string; platform: string; description: string }>;
+  error?: string;
+}> {
+  try {
+    const styles = await db.select({
+      id: communityStyles.id,
+      name: communityStyles.name,
+      platform: communityStyles.platform,
+      description: communityStyles.description,
+    }).from(communityStyles);
+
+    return {
+      success: true,
+      styles: styles.map(s => ({
+        id: s.id,
+        name: s.name || '',
+        platform: s.platform || 'Community',
+        description: s.description || '',
+      })),
+    };
+  } catch (error) {
+    console.error('[Tool:getCommunityStyles] 错误:', error);
+    return { success: false, error: '获取失败' };
+  }
+}
+
+
+export async function webSearch(params: { keyword: string }) {
   const exa_client = new Exa(process.env.EXA_API_KEY);
 
   const result = await exa_client.searchAndContents(
@@ -208,25 +295,30 @@ export async function generateIconSet(params: {
 }> {
   const { mainBody, mainBodies, styles: customStyles } = params;
 
+  // 先加载社区风格
+  await loadCommunityStyles();
+
   // 使用自定义风格或默认风格
   const stylesToUse = customStyles && customStyles.length > 0 
     ? customStyles 
     : ['appstore', 'material', 'serene', 'atelier'];
 
   // 确定每个风格使用的主体
-  // 如果有 mainBodies 数组，每个风格用不同主体；否则都用同一个 mainBody
   const bodies = mainBodies && mainBodies.length > 0 ? mainBodies : [mainBody || '图标'];
   
   console.log(`[Tool:generateIconSet] 批量生成: ${bodies.join(', ')} (${stylesToUse.length} 种风格)`);
   
   const results = await Promise.all(
     stylesToUse.map(async (style, index) => {
-      const config = COLOR_SCHEMES[style];
+      // 优先从插件系统获取（包含社区风格）
+      const plugin = getStylePlugin(style);
+      const config = plugin?.config || COLOR_SCHEMES[style];
+      
       if (!config) {
         console.warn(`[Tool:generateIconSet] 未知风格: ${style}`);
         return null;
       }
-      // 循环使用主体列表，如果主体数量少于风格数量则循环
+      
       const bodyForStyle = bodies[index % bodies.length];
       const svg = await generateIconFromMainBody({ mainBody: bodyForStyle, style });
       return {
