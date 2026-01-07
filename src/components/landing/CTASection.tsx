@@ -4,11 +4,13 @@ import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useRouter } from 'next/navigation';
+import { useI18n } from '@/lib/i18n';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function CTASection() {
   const router = useRouter();
+  const { t } = useI18n();
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -82,19 +84,19 @@ export default function CTASection() {
           <h2 style={{
             fontSize: '44px', fontWeight: 700, color: '#111', marginBottom: '20px', lineHeight: 1.2
           }}>
-            准备好创造
+            {t('cta.title1')}
             <span style={{
               background: 'linear-gradient(135deg, #6366f1, #ec4899)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
-            }}> 惊艳图标 </span>
-            了吗？
+            }}>{t('cta.title2')}</span>
+            {t('cta.title3')}
           </h2>
 
           <p style={{
             fontSize: '18px', color: '#64748b', marginBottom: '40px',
             maxWidth: '500px', margin: '0 auto 40px', lineHeight: 1.6
           }}>
-            立即开始，让 AI 为你的应用打造独一无二的专业图标，提升品牌形象
+            {t('cta.subtitle')}
           </p>
 
           {/* 按钮组 */}
@@ -119,7 +121,7 @@ export default function CTASection() {
                 e.currentTarget.style.boxShadow = '0 12px 32px rgba(99,102,241,0.4)';
               }}
             >
-              免费开始创作
+              {t('cta.button')}
               <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
@@ -143,7 +145,7 @@ export default function CTASection() {
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              查看案例
+              {t('cta.viewCases')}
             </button>
           </div>
 
@@ -153,9 +155,9 @@ export default function CTASection() {
             marginTop: '48px', paddingTop: '32px', borderTop: '1px solid rgba(0,0,0,0.05)'
           }}>
             {[
-              { icon: '🔒', text: '安全可靠' },
-              { icon: '⚡', text: '秒级生成' },
-              { icon: '💯', text: '免费使用' },
+              { icon: '🔒', text: t('cta.secure') },
+              { icon: '⚡', text: t('cta.fast') },
+              { icon: '💯', text: t('cta.free') },
             ].map((item, idx) => (
               <div key={idx} style={{
                 display: 'flex', alignItems: 'center', gap: '8px',

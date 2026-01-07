@@ -69,9 +69,9 @@ export async function runAgentStream(userMessage, history, onEvent) {
     const functionName = toolCall.function.name;
     const args = JSON.parse(toolCall.function.arguments);
     
-    onEvent({ type: 'tool_start', name: functionName, args });  // 通知前端
+    onEvent({ type: 'tool_start', name: functionName, args });  // 通知前端的后端调用日志
     
-    const result = await toolFunctions[functionName](args);     // 执行工具
+    const result = await toolFunctions[functionName](args);     // 执行工具函数
     
     onEvent({ type: 'tool_result', svg: result.svg });          // 返回结果
   }
@@ -192,3 +192,19 @@ if (response.tool_calls) {
 | tool_choice: 'required' | 强制 AI 调用工具，不要只回复文字 |
 
 核心就是 **让 AI 当"调度员"，你写"工人"（工具函数）**。
+
+
+#### core sop : git status --short 看看看看未提交的commit，告诉我你做了什么，向我解释 这是我的理解:{your_understand} 解释并对齐
+
+### Logs 2026更新日志
+
+#### 01-06
+#### onEvent如何实现的，工具是如何发出事件的，agent.ts是如何捕获事件的,sse对象如何发给前端的，是会话中一直监听吗? onEvent 就是一个"喊话器"，agent.ts 拿着它，每当有事发生就喊一声，API route 听到后写入流，前端读取流更新界面。
+#### onEvent是工具函数runAgentStream的一个回调函数，写在参数里面  如何使用?通过创建一个写入流，每当onEvent被调用，就把数据写入流writer.write(event.json()) 并返回sse响应  前端通过reader.read()持续读取数据流 sse是服务器单向推送数据流给客户端的协议
+
+
+
+#### 01-07
+#### i18n翻译所有上下文，文本中英翻译映射  添加图标 所有页面组件使用t()函数来获取翻译文本
+#### 对接谷歌登录认证 next-auth 新增认证模块接口 provider配置谷歌认证服务提供者 用户表和会话表相关联 登录按钮组件提供会话 提供认证对象包装 获取id，用户名和邮箱，用户头像 将本来的登录注册认证从浏览器本地切换到谷歌的signIn,signOut 会话接口获取当前用户
+#### db下的schemas新增用户表 会话表的用户id换成users.id

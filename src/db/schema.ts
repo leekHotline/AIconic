@@ -1,8 +1,20 @@
 import { pgTable, text, timestamp, integer, uuid, jsonb } from 'drizzle-orm/pg-core';
 
+// 用户表
+export const users = pgTable('users', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  email: text('email').notNull().unique(),
+  name: text('name'),
+  avatar: text('avatar'),
+  provider: text('provider').default('google'),
+  providerId: text('provider_id'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
 // 会话表
 export const sessions = pgTable('sessions', {
   id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
   title: text('title').default('新会话'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
