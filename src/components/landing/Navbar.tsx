@@ -3,10 +3,15 @@
 import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { useRouter } from 'next/navigation';
+import { useI18n } from '@/lib/i18n';
+import { signIn, signOut, useSession } from 'next-auth/react';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function Navbar() {
   const router = useRouter();
   const navRef = useRef<HTMLElement>(null);
+  const { t } = useI18n();
+  const { data: session } = useSession();
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -43,22 +48,14 @@ export default function Navbar() {
             style={{ height:'40px', width: '40px' , borderRadius:'12px'}}
             >
             </img>
-          {/* <div style={{
-            width: '40px', height: '40px', borderRadius: '12px',
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(99,102,241,0.4)'
-          }}>
-            <span style={{ color: '#fff', fontWeight: 700, fontSize: '18px' }}>A</span>
-          </div> */}
           <span style={{ fontWeight: 700, fontSize: '20px', color: '#111' }}>AIconic</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           {[
-            { label: '关于', href: '#about' },
-            { label: '展示', href: '#showcase' },
-            { label: '功能', href: '#features' },
+            { label: t('nav.about'), href: '#about' },
+            { label: t('nav.showcase'), href: '#showcase' },
+            { label: t('nav.features'), href: '#features' },
           ].map((item, idx) => (
             <a key={idx} href={item.href} className="nav-link"
               style={{ fontSize: '15px', color: '#64748b', textDecoration: 'none', transition: 'color 0.2s' }}
@@ -67,6 +64,7 @@ export default function Navbar() {
               {item.label}
             </a>
           ))}
+          
           <button
             onClick={() => router.push('/icon')}
             className="nav-cta"
@@ -79,8 +77,51 @@ export default function Navbar() {
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(99,102,241,0.5)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(99,102,241,0.4)'; }}
           >
-            开始创作
+            {t('nav.start')}
           </button>
+
+          {/* 语言切换按钮 */}
+          <LanguageSwitcher />
+
+          {/* 用户登录按钮 */}
+          {session?.user ? (
+            <button
+              onClick={() => signOut()}
+              style={{
+                width: '36px', height: '36px', borderRadius: '50%',
+                background: session.user.image ? 'transparent' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                border: 'none', cursor: 'pointer',
+                color: '#fff', fontSize: '14px', fontWeight: 600,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                overflow: 'hidden'
+              }}
+              title={`${session.user.name} - 点击退出`}
+            >
+              {session.user.image ? (
+                <img src={session.user.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                session.user.name?.charAt(0).toUpperCase()
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={() => signIn('google')}
+              style={{
+                width: '36px', height: '36px', borderRadius: '50%',
+                background: '#f3f4f6', border: '1px solid #e5e7eb',
+                cursor: 'pointer', transition: 'all 0.2s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#6b7280'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#e5e7eb'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#f3f4f6'; }}
+              title={t('nav.login')}
+            >
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
     </nav>
