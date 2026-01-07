@@ -150,7 +150,8 @@ export async function runAgentStream(
   history: Message[] = [], 
   generateMultiple: boolean = false,
   customStyles: string[] | undefined,
-  onEvent: (event: StreamEvent) => void
+  onEvent: (event: StreamEvent) => void,
+  signal?: AbortSignal  // 支持打断
 ) {
   // 获取可用风格列表
   const availableStyles = customStyles && customStyles.length > 0 
@@ -188,39 +189,23 @@ export async function runAgentStream(
   });
 
   // 系统提示词 - 指导 AI 如何使用工具
-  const systemPrompt = generateMultiple 
-    ? `你是专业的图标设计师。生成图标时必须遵循以下流程：
+  const systemPrompt = `你是专业的图标设计助手 AIconic。
 
-**重要：必须按顺序执行两个步骤！**
+**首先判断用户意图：**
+- 如果用户想要生成/创建/设计图标 → 调用工具生成图标
+- 如果用户在闲聊、提问、或说"不要生成" → 直接文字回复，不调用任何工具
+- 如果用户说"停止"、"取消"、"不要了" → 停止操作，回复确认
 
-步骤 1: 先调用 analyze_icon_main_body 分析用户描述，获取 4 个主体元素
-步骤 2: 将分析得到的所有主体元素传给 generate_icon_set，每个风格使用不同的主体
+**生成图标的流程（仅当用户明确想要图标时）：**
+1. 调用 analyze_icon_main_body 分析用户描述，获取主体元素
+2. 调用 generate_icon_set 生成图标
 
 当前可用风格: ${styleEnumStr}
 
-示例流程:
-用户: "创意设计工具"
-→ 调用 analyze_icon_main_body(userPrompt: "创意设计工具")
-→ 得到 mainBodies: ["灯泡", "铅笔", "调色板", "拼接方块"]
-→ 调用 generate_icon_set(mainBodies: ["灯泡", "铅笔", "调色板", "拼接方块"])
-→ 生成 4 个图标，每个风格用不同的主体
-
-现在开始，直接调用工具，不要先回复文字。
-
 **重要规则：**
+- 先理解用户意图，不要盲目调用工具
 - 不要在文本回复中包含 SVG 代码
-- SVG 代码应该通过工具结果返回，不要作为文本内容输出
-- 文本回复只应该包含简短的说明文字`
-    : `你是专业的图标设计师。
-当用户想要生成图标时，先用 analyze_icon_main_body 分析主体，再用 generate_icon_set 生成图标。
-当前可用风格: ${styleEnumStr}
-
-**重要规则：**
-- 不要在文本回复中包含 SVG 代码
-- SVG 代码应该通过工具结果返回，不要作为文本内容输出
-- 文本回复只应该包含简短的说明文字
-
-用中文回复。`;
+- 用中文回复`;
 
   const messages: Message[] = [
     { role: 'system', content: systemPrompt },
@@ -229,15 +214,21 @@ export async function runAgentStream(
   ];
 
   try {
+    // 检查是否已取消
+    if (signal?.aborted) {
+      onEvent({ type: 'done' });
+      return;
+    }
+    
     // 记录已执行的工具调用，避免重复
     const executedCalls = new Set<string>();
     
-    // 第一轮: AI 决定调用哪些工具
+    // 第一轮: AI 决定调用哪些工具（改为 auto，让 AI 自己判断）
     const response = await client.chat.completions.create({
       model: 'gpt-5.1',
       messages,
       tools: dynamicToolDefinitions,
-      tool_choice: generateMultiple ? 'required' : 'auto',
+      tool_choice: 'auto',  // 让 AI 自己决定是否调用工具
     });
 
     const assistantMessage = response.choices[0].message;
@@ -247,9 +238,23 @@ export async function runAgentStream(
 
     // 循环执行工具调用，直到没有更多工具调用
     while (toolCalls && toolCalls.length > 0) {
+      // 检查是否已取消
+      if (signal?.aborted) {
+        onEvent({ type: 'text', content: '已取消操作' });
+        onEvent({ type: 'done' });
+        return;
+      }
+      
       const toolResults: any[] = [];
       
       for (const toolCall of toolCalls) {
+        // 检查是否已取消
+        if (signal?.aborted) {
+          onEvent({ type: 'text', content: '已取消操作' });
+          onEvent({ type: 'done' });
+          return;
+        }
+        
         if (toolCall.type !== 'function') continue;
         
         const functionName = toolCall.function.name;

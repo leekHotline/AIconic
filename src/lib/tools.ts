@@ -33,7 +33,14 @@ const client = new OpenAI({
 });
 
 
-export async function WebSearch(params: { keyword: string }) {
+export async function createStylePlugin(params: {}){
+  return {
+    data: "success"
+  }
+}
+
+
+export async function webSearch(params: { keyword: string }) {
   const exa_client = new Exa(process.env.EXA_API_KEY);
 
   const result = await exa_client.searchAndContents(
