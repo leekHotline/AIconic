@@ -50,3 +50,15 @@ export const iconFormats = pgTable('icon_formats', {
   filePath: text('file_path').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+// 社区风格表
+export const communityStyles = pgTable('community_styles', {
+  id: text('id').primaryKey(),  // 风格ID
+  name: text('name').notNull(),
+  platform: text('platform').default('Community'),
+  description: text('description'),
+  colors: jsonb('colors').notNull(),  // { primary, secondary, background, accent }
+  svgTemplate: text('svg_template').notNull(),
+  authorId: uuid('author_id').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow(),
+});

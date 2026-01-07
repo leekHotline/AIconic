@@ -193,6 +193,16 @@ if (response.tool_calls) {
 
 核心就是 **让 AI 当"调度员"，你写"工人"（工具函数）**。
 
+#### Agent 调用工具的流程：
+
+#### 1. agent.ts 定义工具 (toolDefinitions) → 告诉 AI 有哪些工具
+#### 2. agent.ts 映射函数 (toolFunctions) → 工具名 → 实际函数
+#### 3. tools.ts 实现函数 → 执行具体逻辑
+#### 4. AI 根据用户意图选择调用哪个工具
+
+
+
+
 
 #### core sop : git status --short 看看看看未提交的commit，告诉我你做了什么，向我解释 这是我的理解:{your_understand} 解释并对齐
 
@@ -210,3 +220,9 @@ if (response.tool_calls) {
 #### db下的schemas新增用户表 会话表的用户id换成users.id
 
 #### 字段类型不匹配，用as any确保任何类型都可以通过 drizzle类型缓存未更新 pnpm db:generate重新生成类型更好  外圆，竖轴椭圆，横轴椭圆
+
+#### 用户意图识别 创建平面简约风格插件和插件平面简约风格图标如何意图分界的?
+#### 通过关键词优先级来识别用户 风格 插件 新建-> 插件风格  生成 图标 做 -> 图标
+#### Agent需要用户填写所有必填参数（id, name, colors, svgTemplate）才能调用工具
+#### 没有的参数可以让ai自动生成
+#### 社区风格是动态加载的 不在静态的 COLOR_SCHEMES 中 使用 getStylePlugin 并先加载社区风格

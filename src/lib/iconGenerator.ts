@@ -1,5 +1,7 @@
 import OpenAI from 'openai';
-import { getStylePlugin, STYLE_CONFIGS, StyleConfig } from './styles';
+import { getStylePlugin, STYLE_CONFIGS, StyleConfig, registerStyle, StylePlugin, StyleColors } from './styles';
+import { db } from './db';
+import { communityStyles } from '@/db/schema';
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -12,6 +14,54 @@ const client = new OpenAI({
 // ============================================
 
 /**
+ * 从数据库加载社区风格并注册
+ */
+export async function loadCommunityStyles(): Promise<void> {
+  try {
+    const styles = await db.select().from(communityStyles);
+    
+    for (const style of styles) {
+      const colors = style.colors as StyleColors;
+      const svgTemplate = style.svgTemplate;
+      
+      // 创建动态插件
+      const plugin: StylePlugin = {
+        config: {
+          id: style.id,
+          name: style.name,
+          platform: style.platform || 'Community',
+          description: style.description || '',
+          colors,
+        },
+        buildSvg: (iconContent: string, c: StyleColors) => {
+          // 替换模板中的变量
+          return svgTemplate
+            .replace(/\$\{iconContent\}/g, iconContent)
+            .replace(/\$\{colors\.primary\}/g, c.primary)
+            .replace(/\$\{colors\.secondary\}/g, c.secondary)
+            .replace(/\$\{colors\.background\}/g, c.background)
+            .replace(/\$\{colors\.accent\}/g, c.accent);
+        },
+        getPrompt: (mainBody: string, c: StyleColors) => {
+          return `你是图标设计师。绘制 "${mainBody}" 的图形。
+主色: ${c.primary}，次色: ${c.secondary}
+规则:
+1. 只输出 SVG 图形元素 (path, circle, rect, ellipse)
+2. 图形中心点在 (60, 60)，范围 35-85
+3. 主体占图标 60-70% 面积
+4. 直接输出代码，无解释`;
+        },
+      };
+      
+      registerStyle(plugin);
+      console.log(`[IconGen] 加载社区风格: ${style.name} (${style.id})`);
+    }
+  } catch (error) {
+    console.error('[IconGen] 加载社区风格失败:', error);
+  }
+}
+
+/**
  * 从主体生成图标
  */
 export async function generateIconFromMainBody(params: {
@@ -20,8 +70,13 @@ export async function generateIconFromMainBody(params: {
 }): Promise<string | null> {
   const { mainBody, style } = params;
   
-  // 获取风格插件
-  const plugin = getStylePlugin(style);
+  // 尝试加载社区风格（如果还没加载）
+  let plugin = getStylePlugin(style);
+  if (!plugin) {
+    await loadCommunityStyles();
+    plugin = getStylePlugin(style);
+  }
+  
   if (!plugin) {
     console.error(`[IconGen] 未找到风格: ${style}`);
     return null;
