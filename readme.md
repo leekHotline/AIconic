@@ -5,8 +5,9 @@
 
 ```
 git clone https://github.com/leekHotline/AIconic.git
-npm install pnpm
+npm install -g pnpm
 pnpm install 
+cp .env.example .env.local
 pnpm dev
 ```
 
@@ -201,12 +202,19 @@ if (response.tool_calls) {
 #### 4. AI 根据用户意图选择调用哪个工具
 
 
+### 技术栈：
 
+#### Next.js 15 + React 19 + TypeScript
+#### Tailwind CSS 4
+#### Drizzle ORM + Neon (PostgreSQL)
+#### AI SDK (OpenAI / Anthropic)
+#### NextAuth 认证
+#### GSAP + Framer Motion 动画
 
 
 #### core sop : git status --short 看看看看未提交的commit，告诉我你做了什么，向我解释 这是我的理解:{your_understand} 解释并对齐
 
-### Logs 2026更新日志
+## Logs 2026更新日志
 
 #### 01-06  流式事件响应: 文本 日志 svg代码
 #### onEvent如何实现的，工具是如何发出事件的，agent.ts是如何捕获事件的,sse对象如何发给前端的，是会话中一直监听吗? onEvent 就是一个"喊话器"，agent.ts 拿着它，每当有事发生就喊一声，API route 听到后写入流，前端读取流更新界面。
