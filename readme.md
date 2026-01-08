@@ -1,4 +1,7 @@
 # Welcome to AIconic!
+<img width="848" height="1264" alt="AIconic 平台宣传海报" src="https://github.com/user-attachments/assets/e613e3e4-3d96-41c4-9ab0-cc9bf7aa79b9" />
+
+
 <img width="1816" height="904" alt="图片" src="https://github.com/user-attachments/assets/d3669ed3-c16b-4a79-aa18-95d8014e2bed" />
 
 <img width="1112" height="790" alt="图片" src="https://github.com/user-attachments/assets/e6b98155-029f-428c-9e53-9b248c336f96" />
