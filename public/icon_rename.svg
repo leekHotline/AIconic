@@ -1,0 +1,32 @@
+<svg width="256" height="256" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 微妙阴影 -->
+    <filter id="subtle-shadow-min" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#1A1A2E" flood-opacity="0.08"/>
+    </filter>
+    
+    <!-- 边框阴影 -->
+    <filter id="border-shadow-min" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#1A1A2E" flood-opacity="0.05"/>
+    </filter>
+  </defs>
+  
+  <!-- 纯白背景 -->
+  <rect x="0" y="0" width="80" height="80" rx="16" fill="#FFFFFF" filter="url(#border-shadow-min)"/>
+  
+  <!-- 极细边框 -->
+  <rect x="0" y="0" width="80" height="80" rx="16" fill="none" stroke="#1A1A2E" stroke-width="0.4" opacity="0.1"/>
+  
+  <!-- 主体容器 -->
+  <g transform="translate(40, 40)">
+    <g transform="translate(-40, -40)" filter="url(#subtle-shadow-min)"><circle cx="40" cy="40" r="14" fill="none" stroke="#1A1A2E" stroke-width="3.2"/>
+<path d="M40 20 L40 16" stroke="#1A1A2E" stroke-width="3.2" stroke-linecap="round"/>
+<path d="M54 24 L57 21" stroke="#1A1A2E" stroke-width="3.2" stroke-linecap="round"/>
+<path d="M64 40 L68 40" stroke="#1A1A2E" stroke-width="3.2" stroke-linecap="round"/>
+<path d="M54 64 L57 67" stroke="#1A1A2E" stroke-width="3.2" stroke-linecap="round"/>
+<path d="M40 70 L40 74" stroke="#1A1A2E" stroke-width="3.2" stroke-linecap="round"/>
+<path d="M26 64 L23 67" stroke="#1A1A2E" stroke-width="3.2" stroke-linecap="round"/>
+<path d="M16 40 L12 40" stroke="#1A1A2E" stroke-width="3.2" stroke-linecap="round"/>
+<path d="M26 24 L23 21" stroke="#1A1A2E" stroke-width="3.2" stroke-linecap="round"/></g>
+  </g>
+</svg>

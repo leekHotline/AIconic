@@ -456,7 +456,10 @@ export default function AIconic({ initialPrompt }: AIconicProps) {
             <button onClick={() => setShowSidebar(!showSidebar)} style={{ padding: '6px', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '6px', color: '#6b7280' }}>
               <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: '14px' }}>A</div>
+            <img src="/icon_rename.svg" alt="Logo" style={{ width: '32px', height: '32px', borderRadius: '8px' }} />
+
+
+            {/* <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: '14px' }}>A</div> */}
             <span style={{ fontWeight: 600, color: '#1f2937' }}>AIconic</span>
           </div>
           <button onClick={handleNewChat} style={{ padding: '6px', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '6px', color: '#9ca3af' }}>
